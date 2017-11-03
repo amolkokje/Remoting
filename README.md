@@ -1,7 +1,8 @@
 # Remoting 
-This project has been created to be able to assist remoting to Winows and Linux machines. 
+This project has been created to be able to build automation code for remoting to Winows and Linux machines. 
 The code base needs to run on windows machine as it uses windows utils like powershell, command line, psexec in the background to to Windows machine remoting tass.
 For Linux machine remoting, it uses SSH and SFTP.
+Tested with all Windows flavors, Centos 6.7, 7 and Debian systems.
 
 ### Pre-Reqs:
 Need following installed on controller host or machine you are running this automation from:
