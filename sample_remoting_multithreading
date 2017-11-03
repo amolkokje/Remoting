@@ -1,0 +1,84 @@
+import os, sys, re, threading, subprocess, win32api
+from string import ascii_uppercase
+from WindowsRemoteMachine import WindowsRemoteMachine
+from LinuxRemoteMachine import LinuxRemoteMachine
+
+""" USE THIS SAMPLE CODE TO DEVELOP SCRIPTS TO DO REMOTING TO MACHINES IN PARALLEL """
+
+""" INIT VARS """
+linux_username='linuxUsername' #login username for linux machines
+windows_username='WINDOMAIN\windowsUsername' #login username for windows remote machines
+password='machinePass' #password to the remote machine
+psexec='C:\\temp\\PsExec.exe'
+
+class machine_thread(threading.Thread):    
+    def __init__(self, machine_ip, machine_name, machine_type):        
+        threading.Thread.__init__(self) 
+        self.machine_ip=machine_ip
+        self.machine_name=machine_name
+        self.machine_type=machine_type
+        if (self.machine_type=='windows'):
+            self.mc=WindowsRemoteMachine(self.machine_ip, self.machine_name, windows_username, password, psexec, enable_remoting=False, log_level='INFO')
+        else:
+            self.mc=LinuxRemoteMachine(self.machine_ip, self.machine_name, linux_username, password, log_level='INFO')
+        print "{} init done".format(self.machine_name)
+        
+    """ PUT ALL THE CODE TO RUN FOR EACH MACHINE IN HERE """
+    def run(self):        
+        if (self.mc.type=='windows'):
+
+            self.mc.execute_command('ipconfig')
+
+            assert self.mc.upload_folder("C:\\temp_aa","C:\\test\\temp_bb")
+            assert self.mc.upload_file("C:\\temp_aa","C:\\test\\temp_cc","a2.txt")
+            assert self.mc.download_folder("C:\\test\\temp_download_folder","C:\\amol")
+            assert self.mc.download_file("C:\\test\\temp_download_file","C:\\amol","amol.txt")
+
+            print self.mc.get_reg_key_value('HKLM:\SOFTWARE\Microsoft\Notepad\DefaultFonts', 'iPointSize')
+            self.mc.set_reg_key_value('HKLM:\SOFTWARE\Microsoft\Notepad\DefaultFonts', 'iPointSize','220')
+            print self.mc.get_reg_key_value('HKLM:\SOFTWARE\Microsoft\Notepad\DefaultFonts', 'iPointSize')
+            self.mc.set_reg_key_value('HKLM:\SOFTWARE\Microsoft\Notepad\DefaultFonts', 'iPointSize','110')
+            print self.mc.get_reg_key_value('HKLM:\SOFTWARE\Microsoft\Notepad\DefaultFonts', 'iPointSize')
+
+            print "service status={}".format(self.mc.service_status('notepad'))
+            print "service status={}".format(self.mc.service_status('notepad++'))
+            #self.mc.service_start('notepad')
+            assert self.mc.service_stop('notepad++')
+            print "service status={}".format(self.mc.service_status('notepad++'))
+        else:
+            #pass
+            #self.mc.service_stop('dxlbroker',10)
+            #print self.mc.service_status('dxlbroker')
+            #self.mc.service_start('dxlbroker')
+            #print self.mc.service_status('dxlbroker')
+            #print self.mc.service_status('ipe')
+            assert self.mc.upload_folder("C:\\temp_aa","/tmp/amol/aa/")
+            self.mc.execute_command('ifconfig')
+            assert self.mc.upload_folder("C:\\temp_aa","/tmp/amol/bb_folder/")
+            assert self.mc.upload_file("C:\\temp_aa","/tmp/amol/cc_file/","a2.txt")
+            assert self.mc.download_folder("C:\\temp_download\\temp_download_folder","/aa/test/")
+            assert self.mc.download_file("C:\\temp_download\\temp_download_file","/aa/test/","q1.txt")
+
+        
+print "-- SCRIPT START ---"  
+# remove all drives
+#print subprocess.check_output('net use * /d', shell=True)
+
+machine_list_file=list()
+with open('ml.txt', 'rb') as fh:
+    file_text=fh.readlines()    
+
+mt_list=list()    
+for line in file_text:
+    line=line.replace(' ','')
+    arr=line.split(',')
+    #print arr
+    mt=machine_thread(arr[1], arr[0], arr[2])             
+    mt_list.append(mt)
+    mt.start()            
+    
+for mt in mt_list:
+    mt.join()
+    
+print "-- ALL THREADS DONE! ---"          
+        
