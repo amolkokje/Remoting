@@ -9,3 +9,6 @@ Need following installed on controller host or machine you are running this auto
 - [Powershell](https://docs.microsoft.com/en-us/powershell/scripting/setup/installing-windows-powershell?view=powershell-5.1)
 - [PsExec](https://docs.microsoft.com/en-us/sysinternals/downloads/psexec)
   Note: Also need to provide PsExec.exe path in the WindowsRemoteMachine constructor if its not in Env path
+  
+### Documentation:
+Refer [documentation](https://github.com/amolkokje/Remoting/blob/master/DOCUMENTATION.md) for methods
