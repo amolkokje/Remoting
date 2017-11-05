@@ -7,8 +7,19 @@ from RemoteMachine import RemoteMachine
 class WindowsRemoteMachine(RemoteMachine):  
 
     def __init__(self, machine_ip, machine_name, machine_username, machine_password, psexec_exe, enable_remoting=True, log_level='INFO'):
-                
-        # use 'super' to call a method defined in the parent class. The call below calls the constructor from parent class.
+        """
+        constructor
+        :param machine_ip: ip address of remote machine
+        :param machine_name: host name of remote machine
+        :param machine_username: login username for remote machine
+        :param machine_password: login password for remote machine
+        :param psexec_exe: path to psexec exe
+        :param enable_remoting: flag to enable remoting while creating object
+        :param log_level: set log level
+        """
+
+        # use 'super' to call a method defined in the parent class. The call below calls the constructor from 
+        # parent class.
         super(WindowsRemoteMachine, self).__init__(machine_ip, machine_name, machine_username, machine_password)
         
         self.machine_type='windows'
@@ -37,14 +48,26 @@ class WindowsRemoteMachine(RemoteMachine):
     
     @property
     def ip(self):
+        """
+        machine ip
+        :return:  ip address of remote machine
+        """
         return self.machine_ip
         
     @property
     def name(self):
+        """
+        machine host name
+        :return: hostname of remote machine
+        """
         return self.machine_name
         
     @property
     def type(self):
+        """
+        machine os type
+        :return: os type of remote machine
+        """
         return self.machine_type
 
     # --------------------------------------------------
@@ -52,10 +75,19 @@ class WindowsRemoteMachine(RemoteMachine):
     # --------------------------------------------------
 
     def enable_remoting(self):
+        """
+        enable WinRM for remoting on the remote machine
+        :return: None
+        """
         self.logger.debug("Enable WinRM on machine {0}".format(self.machine_ip))
         self._execute_psexec_command("powershell Enable-PSRemoting -Force")
 
     def set_log_level(self, level):
+        """
+        set the logging level of the class
+        :param level: log level to set for the object
+        :return: None
+        """
         if level == 'DEBUG':
             self.logger.setLevel(logging.DEBUG)
         elif level == 'INFO':
@@ -67,12 +99,22 @@ class WindowsRemoteMachine(RemoteMachine):
     # CHECK METHODS
     # --------------------------------------------------
     
-    def check_file_exists(self, file_path):        
+    def check_file_exists(self, file_path):
+        """
+        check if the file exists on remote machine
+        :param file_path: path on the remote machine
+        :return: True/False
+        """
         file_path = file_path.replace(':','$')
         file_path = "\\\\{0}\\{1}".format(self.machine_ip, file_path)
         return os.path.exists(file_path) and os.path.isfile(file_path)
 
     def check_folder_exists(self, folder_path):
+        """
+        check if the folder exists on remote machine
+        :param folder_path: path on the remote machine
+        :return: True/False
+        """
         folder_path = folder_path.replace(':','$')
         folder_path = "\\\\{0}\\{1}".format(self.machine_ip, folder_path)
         return os.path.exists(folder_path) and os.path.isdir(folder_path)
@@ -82,6 +124,13 @@ class WindowsRemoteMachine(RemoteMachine):
     # --------------------------------------------------
 
     def set_reg_key_value(self, path, key, value):
+        """
+        set registry key on remote machine to value
+        :param path: path of key in registry editor
+        :param key: key name
+        :param value: key value
+        :return: output of powershell command executed
+        """
         self._execute_powershell_command("Set-ItemProperty -Path {0} -Name {1} -Value {2}".format(path, key, value))
 
     # --------------------------------------------------
@@ -89,6 +138,12 @@ class WindowsRemoteMachine(RemoteMachine):
     # --------------------------------------------------
 
     def get_reg_key_value(self, path, key):
+        """
+        get the registry value using specific key
+        :param path: path of key in registry editor
+        :param key: key name
+        :return: key value output of the powershell command
+        """
         output_rows = self._execute_powershell_command("Get-ItemProperty -Path {0} -Name {1}".format(path, key))
         regex_string = r"({0})(\s*:\s*)(.*)".format(key)
         match_obj = re.match(regex_string, output_rows[0])
@@ -101,6 +156,13 @@ class WindowsRemoteMachine(RemoteMachine):
     # --------------------------------------------------
 
     def download_file(self, local_destination, remote_destination, file_name):
+        """
+        download file from remote destination path to destination on local machine
+        :param local_destination: folder path on local machine
+        :param remote_destination: folder path on remote machine
+        :param file_name: file name to download
+        :return: True/False
+        """
         self.logger.debug("Downloading file {} FROM={}, TO={}".format(file_name, remote_destination, local_destination))
         
         remote_destination_drive, remote_destination_subdir = os.path.splitdrive(remote_destination)
@@ -122,6 +184,12 @@ class WindowsRemoteMachine(RemoteMachine):
         return os.path.exists(local_file_path) and os.path.isfile(local_file_path)
 
     def download_folder(self, local_destination, remote_destination):
+        """
+        download folder from remote destination to local destination
+        :param local_destination: path of folder on local machine
+        :param remote_destination: path of folder on remote machine
+        :return: true/false
+        """
         self.logger.debug("Downloading folder FROM={}, TO={}".format(remote_destination, local_destination))
         
         remote_destination_drive, remote_destination_subdir = WindowsRemoteMachine.get_remote_destination_drive_path\
@@ -140,6 +208,13 @@ class WindowsRemoteMachine(RemoteMachine):
     # --------------------------------------------------
     
     def upload_file(self, local_destination, remote_destination, file_name):
+        """
+        upload file from local destination to remote machine destination
+        :param local_destination: location on local machine
+        :param remote_destination: location on remote machine
+        :param file_name: name of file to upload
+        :return: true/false
+        """
         self.logger.debug("Uploading file {0} FROM={1}, TO={2}".format(file_name, local_destination, remote_destination))
         
         remote_destination_drive, remote_destination_subdir = WindowsRemoteMachine.get_remote_destination_drive_path\
@@ -151,9 +226,14 @@ class WindowsRemoteMachine(RemoteMachine):
         self._execute_robocopy_command(local_destination, os.path.join(map_drive, '\\', remote_destination_subdir), file_name)
         self._run_system_command("net use {0} /d".format(map_drive))
         return self.check_file_exists(os.path.join(remote_destination,file_name))
-    
-    
+
     def upload_folder(self, local_destination, remote_destination):
+        """
+        upload folder from local destination to remote folder destination
+        :param local_destination: location on local machine
+        :param remote_destination: location on remote machine
+        :return: true/false
+        """
         self.logger.debug("Uploading folder FROM={0}, TO={1}".format(local_destination, remote_destination))
         
         remote_destination_drive, remote_destination_subdir = WindowsRemoteMachine.get_remote_destination_drive_path \
@@ -171,17 +251,34 @@ class WindowsRemoteMachine(RemoteMachine):
     # --------------------------------------------------
 
     def service_status(self, service_name):
+        """
+        check if the service by name is running on remote machine
+        :param service_name: name of service to check the status of
+        :return: true/false
+        """
         output_rows=self._execute_powershell_command("Get-Process {}".format(service_name))
         if ((not output_rows) or (service_name not in output_rows[-1])):
             return False
         return True
 
-    def service_start(self, service_name, timeout=5):        
+    def service_start(self, service_name, timeout=5):
+        """
+        start service by name on remote machine
+        :param service_name: name of service to start
+        :param timeout: timeout for attempt to start
+        :return: true/false
+        """
         """ unable to do this reliably directly through powershell Start-Process or using task using name directly.
         Only possible way is to use PsExec.exe with full process path """
         pass
 
     def service_stop(self, service_name, timeout=5):
+        """
+        stop the service by name on remote machine
+        :param service_name: name of service to stop
+        :param timeout: timeout for service to stop
+        :return: true/false
+        """
         if self.service_status(service_name):
             if '.exe' not in service_name:
                 service_name=service_name+'.exe'
@@ -210,6 +307,11 @@ class WindowsRemoteMachine(RemoteMachine):
     # --------------------------------------------------
 
     def execute_command(self, command):
+        """
+        execute command on remote machine
+        :param command: command to execute on remote machine
+        :return: output of command execution
+        """
         return self._execute_psexec_command(command)
 
     # --------------------------------------------------
@@ -217,6 +319,11 @@ class WindowsRemoteMachine(RemoteMachine):
     # --------------------------------------------------
     
     def _execute_powershell_command(self, command):
+        """
+        execute powershell command using cmdlet on remote machine
+        :param command: powershell command to execute on remote machine
+        :return: output of powershell command executed
+        """
         file_name = 'remote_powershell_script.ps1'
         content = "$sec_password=ConvertTo-SecureString \"{0}\" -AsPlainText -Force \n" \
                   "$my_creds=New-Object System.Management.Automation.PSCredential(\"{1}\",$sec_password) \n" \
@@ -229,6 +336,13 @@ class WindowsRemoteMachine(RemoteMachine):
         return output
 
     def _execute_robocopy_command(self, source, destination, file_name=None):
+        """
+        execute robocopy command to copy file or folder from one location to other
+        :param source: location to copy from
+        :param destination: location to copy to
+        :param file_name: name of file to copy, if any
+        :return: None
+        """
         """
         robocopy error codes:
         0x10 Serious error. Robocopy did not copy any files. This is either a usage error or an error due to
@@ -255,12 +369,23 @@ class WindowsRemoteMachine(RemoteMachine):
                 raise 
 
     def _execute_psexec_command(self, command):
+        """
+        execute command using PsExex.exe on remote machine
+        :param command: command to execute on remote machine
+        :return: None
+        """
         psexec_command = "{0} \\\\{1} -n 15 -u \"{2}\" -p \"{3}\" -h {4}".format(self.psexec_exe, self.machine_ip,
                                                                                  self.machine_username,
                                                                                  self.machine_password, command)
         self._run_system_command(psexec_command)
 
     def _run_system_command(self, cmd, sleep=None):
+        """
+        run system command on local machine synchronously
+        :param cmd: command to execute on local machine
+        :param sleep: time to sleep after executing the command
+        :return: command output
+        """
         try:
             self.logger.debug("CMD='{0}'".format(cmd))
             output = subprocess.check_output(cmd, shell=True).strip()
