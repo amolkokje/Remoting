@@ -11,4 +11,4 @@ Need following installed on controller host or machine you are running this auto
   Note: Also need to provide PsExec.exe path in the WindowsRemoteMachine constructor if its not in Env path
   
 ### Documentation:
-Refer [documentation](https://github.com/amolkokje/Remoting/blob/master/DOCUMENTATION.md) for methods
+Refer [documentation](https://github.com/amolkokje/Remoting/blob/master/DOCUMENTATION.md) for definition of methods
