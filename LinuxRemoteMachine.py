@@ -7,6 +7,15 @@ from RemoteMachine import RemoteMachine
 class LinuxRemoteMachine(RemoteMachine):
 
     def __init__(self, machine_ip, machine_name, machine_username, machine_password, log_level='INFO'):
+        """
+        constructor
+        :param machine_ip: ip address of remote machine
+        :param machine_name: host name of remote machine
+        :param machine_username: login username for remote machine
+        :param machine_password: login password for remote machine
+        :param psexec_exe: path to psexec exe
+        :param log_level: set log level
+        """
         # use 'super' to call a method defined in the parent class.
         # The call below calls the constructor from parent class.
         super(LinuxRemoteMachine, self).__init__(machine_ip, machine_name, machine_username, machine_password)
@@ -54,6 +63,11 @@ class LinuxRemoteMachine(RemoteMachine):
     # --------------------------------------------------
 
     def set_log_level(self, level):
+        """
+        set the logging level of the class
+        :param level: log level to set for the object
+        :return: None
+        """
         if level == 'DEBUG':
             self.logger.setLevel(logging.DEBUG)
         elif level == 'INFO':
@@ -65,10 +79,20 @@ class LinuxRemoteMachine(RemoteMachine):
     # CHECK METHODS
     # --------------------------------------------------
 
-    def check_file_exists(self, file_path):        
+    def check_file_exists(self, file_path):
+        """
+        check if the file exists on remote machine
+        :param file_path: path on the remote machine
+        :return: True/False
+        """
         return self.check_folder_exists(file_path)
 
     def check_folder_exists(self, folder_path):
+        """
+        check if the folder exists on remote machine
+        :param folder_path: path on the remote machine
+        :return: True/False
+        """
         try:
             self.ftp.stat(folder_path)  
             return True
@@ -80,6 +104,13 @@ class LinuxRemoteMachine(RemoteMachine):
     # --------------------------------------------------
 
     def download_file(self, local_destination, remote_destination, file_name):
+        """
+        download file from remote destination path to destination on local machine
+        :param local_destination: folder path on local machine
+        :param remote_destination: folder path on remote machine
+        :param file_name: file name to download
+        :return: True/False
+        """
         self.logger.debug("Downloading file {} FROM={}, TO={}".format(file_name, remote_destination, local_destination))
         # check if local folder exists
         if not os.path.exists(local_destination):
@@ -94,6 +125,12 @@ class LinuxRemoteMachine(RemoteMachine):
             return False        
 
     def download_folder(self, local_destination, remote_destination):
+        """
+        download folder from remote destination to local destination
+        :param local_destination: path of folder on local machine
+        :param remote_destination: path of folder on remote machine
+        :return: true/false
+        """
         self.logger.debug("Downloading folder FROM={}, TO={}".format(remote_destination, local_destination))
         # check if local folder exists
         if not os.path.exists(local_destination):
@@ -114,6 +151,13 @@ class LinuxRemoteMachine(RemoteMachine):
     # --------------------------------------------------
 
     def upload_file(self, local_destination, remote_destination, file_name):
+        """
+        upload file from local destination to remote machine destination
+        :param local_destination: location on local machine
+        :param remote_destination: location on remote machine
+        :param file_name: name of file to upload
+        :return: true/false
+        """
         self.logger.debug("Uploading file {0} FROM={1}, TO={2}".format(file_name, local_destination, remote_destination))
         local_file_path=os.path.join(local_destination, file_name)
         remote_file_path=os.path.join(remote_destination, file_name)
@@ -130,6 +174,12 @@ class LinuxRemoteMachine(RemoteMachine):
         return self.check_file_exists(os.path.join(remote_destination,file_name))
 
     def upload_folder(self, local_destination, remote_destination):
+        """
+        upload folder from local destination to remote folder destination
+        :param local_destination: location on local machine
+        :param remote_destination: location on remote machine
+        :return: true/false
+        """
         self.logger.debug("Uploading folder FROM={0}, TO={1}".format(local_destination, remote_destination))
         # check local folder exists
         if not os.path.exists(local_destination):
@@ -152,6 +202,11 @@ class LinuxRemoteMachine(RemoteMachine):
     # --------------------------------------------------
 
     def service_status(self, service_name):
+        """
+        check if the service by name is running on remote machine
+        :param service_name: name of service to check the status of
+        :return: true/false
+        """
         output=self.execute_command('service {} status'.format(service_name))
         if not output:
             self.logger.debug("No service found with name '{}'!".format(service_name))
@@ -164,6 +219,12 @@ class LinuxRemoteMachine(RemoteMachine):
             return True
 
     def service_start(self, service_name, timeout=5):
+        """
+        start service by name on remote machine
+        :param service_name: name of service to start
+        :param timeout: timeout for attempt to start
+        :return: true/false
+        """
         if not self.service_status(service_name):
             self.logger.debug("Starting service {}".format(service_name))
             self.execute_command('service {} start'.format(service_name))
@@ -185,6 +246,12 @@ class LinuxRemoteMachine(RemoteMachine):
             return True
 
     def service_stop(self, service_name, timeout=5):
+        """
+        stop the service by name on remote machine
+        :param service_name: name of service to stop
+        :param timeout: timeout for service to stop
+        :return: true/false
+        """
         if self.service_status(service_name):
             self.logger.debug("Stopping service {}".format(service_name))
             self.execute_command('service {} stop'.format(service_name))
@@ -210,6 +277,11 @@ class LinuxRemoteMachine(RemoteMachine):
     # --------------------------------------------------
 
     def execute_command(self, command):
+        """
+        execute command on remote machine
+        :param command: command to execute on remote machine
+        :return: output of command execution
+        """
         return self._run_system_command(command)
 
     # --------------------------------------------------
@@ -217,6 +289,12 @@ class LinuxRemoteMachine(RemoteMachine):
     # --------------------------------------------------
 
     def _run_system_command(self, cmd):
+        """
+        run system command on local machine synchronously
+        :param cmd: command to execute on local machine
+        :param sleep: time to sleep after executing the command
+        :return: command output
+        """
         self.logger.debug("CMD='{}'".format(cmd))
         stdin, stdout, stderr = self.ssh.exec_command(cmd)
         cmd_output=stdout.read()
@@ -224,7 +302,11 @@ class LinuxRemoteMachine(RemoteMachine):
         return cmd_output
 
     def _mkdir_path(self, remote_directory):
-        """ makes the directory tree recursively, if it does not exist """
+        """
+        makes the directory tree recursively, if it does not exist
+        :param remote_directory:
+        :return: None
+        """
         self.logger.debug("remote directory = {}".format(remote_directory))
         if remote_directory == '/':
             # absolute path so change directory to root
